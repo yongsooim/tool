@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <title>Convert A2L </title>
+
+  <link rel="stylesheet" href="./styles.css">
+</head>
+
+<body onload="editor.focus()">
+  <div id="overlay" onclick="overlayOff()">
+    <div id="text">copied</div>
+  </div>
+
+  <div id='navbar'>
+    <ul>
+      <li><a>Convert A2L</a>
+
+      </li>
+      <li><label style="word-wrap:break-word" id='pasteToInput' onClick='pasteToInput()'>Paste to input</li>
+      <li><label style="word-wrap:break-word" id='copyOutput' onClick='copyOutput()'>Copy output</li>
+      <li><label style="word-wrap:break-word" id='pasteAndCopy' onClick='pasteAndCopy()'>Paste and copy</li>
+    </ul>
+  </div>
+
+  <div id='editorGroup'>
+
+    <div id="editor"></div>
+
+    <div id="editorOut"></div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/ace.js" charset="utf-8"></script>
+  <script>
+    var editor = ace.edit("editor")
+    editor.setTheme("ace/theme/clouds")
+    editor.session.setMode("ace/mode/c_cpp")
+    editor.setShowPrintMargin(false)
+
+    var editorOut = ace.edit("editorOut")
+    editorOut.setTheme("ace/theme/dawn")
+    editorOut.session.setMode("ace/mode/c_cpp")
+    editorOut.setShowPrintMargin(false)
+    editorOut.renderer.$cursorLayer.element.style.display = "none"
+    editorOut.setOptions({
+      readOnly: true,
+      highlightActiveLine: false,
+      highlightGutterLine: false
+    })
+    editorOut.setOption("highlightActiveLine", true)
+
+    editor.setAutoScrollEditorIntoView(true)
+    editorOut.setAutoScrollEditorIntoView(true)
+
+    editor.setOptions({
+      vScrollBarAlwaysVisible: true,
+      hScrollBarAlwaysVisible: true,
+
+    })
+
+    editorOut.setOptions({
+      vScrollBarAlwaysVisible: true,
+      hScrollBarAlwaysVisible: true,
+
+    })
+
+    editor.session.setOptions({
+      tabSize: 4,
+      useSoftTabs: false,
+    })
+    editorOut.session.setOptions({
+      tabSize: 4,
+      useSoftTabs: false,
+    })
+
+    editor.getSession().on('change', changed)
+
+    const STATE_OUT = 0
+    const STATE_CHAR = 1
+    const STATE_MEAS = 2
+
+    var state = STATE_OUT
+
+    var pasteAndCopyClicked = false
+
+    function changed() {
+      var length = editor.session.getLength()
+      var tokens = []
+      var outputString = ''
+      var processedString
+      var nthLine = 0
+
+      if (editor.getValue().length == 0) { // when editor.setValue, changed is called twice (1. (delete all) and 2. (actual set value))
+        editorOut.setValue('') // to prevent unintended behavior, early return at empty input (meaning delete all)
+        return
+      }
+
+      for (var i = 0; i < length; i++) {
+        var currentLine = editor.session.getLine(i)
+        processedString = currentLine
+
+        switch (state) {
+          case STATE_OUT:
+            if (currentLine.indexOf('/begin CHARACTERISTIC', 0) !== -1) {
+              state = STATE_CHAR
+              nthLine = 0
+            } else if (currentLine.indexOf('/begin MEASUREMENT', 0) !== -1) {
+              state = STATE_MEAS;
+              nthLine = 0
+            }
+            break
+
+          case STATE_CHAR:
+            processedString = currentLine.replace('VALUE 0x', 'VALUE 0xC0').replace('DP_BLOB 0x', 'DP_BLOB 0x00 0xC0')
+            if (currentLine.indexOf('/end CHARACTERISTIC', 0) !== -1) {
+              state = STATE_OUT;
+            }
+
+            break
+
+          case STATE_MEAS:
+            if (nthLine == 4) {
+
+              processedString = processedString.replace('KP_BLOB', 'KP_BLOB 0x00')
+              var splitted = processedString.split(/[\s]/).filter(x => x != '')
+
+              if (splitted[0].slice(0, 4) == '0xFD') {
+                processedString = '  KP_BLOB 0x00 ' + splitted.join(' ')
+              }
+
+              splitted = processedString.split(/[\s]/).filter(x => x != '')
+
+              if (splitted[splitted.length - 2] == '0') {
+                splitted[splitted.length - 2] = splitted[splitted.length - 1]
+                splitted[splitted.length - 1] = ''
+              }
+
+              processedString = '  ' + splitted.join(' ')
+            } else {
+              if (currentLine.indexOf('/end MEASUREMENT', 0) !== -1) {
+                state = STATE_OUT
+              }
+            }
+            break
+
+        }
+        nthLine++
+
+        outputString += processedString + '\n'
+      }
+      outputString = outputString.substr(0, outputString.length - 1)
+
+      editorOut.setValue(outputString, 1)
+
+      if (pasteAndCopyClicked) {
+        navigator.clipboard.writeText(outputString)
+        overlayOn()
+        pasteAndCopyClicked = false
+      }
+
+      editor.focus()
+    }
+
+    function pasteToInput() {
+      navigator.clipboard.readText().then(data => {
+          editor.setValue(data, 1)
+        },
+        _ => {
+          console.log('accessDenied')
+        })
+    }
+
+    function copyOutput() {
+      editorOut.focus()
+      navigator.clipboard.writeText(editorOut.getValue())
+      overlayOn()
+    }
+
+    function pasteAndCopy() {
+      pasteToInput()
+      pasteAndCopyClicked = true
+    }
+
+    let overlayOffTimer;
+    function overlayOn() {
+      document.getElementById("overlay").style.transition = 'all 0s';
+      document.getElementById("overlay").style.visibility = "visible";
+      document.getElementById("overlay").style.opacity = 0.8;
+
+      clearTimeout(overlayOffTimer)
+      overlayOffTimer = setTimeout(overlayOff, 500)
+    }
+
+    function overlayOff() {
+      document.getElementById("overlay").style.transition = 'all 0.8s';
+      document.getElementById("overlay").style.visibility = "hidden";
+      document.getElementById("overlay").style.opacity = 0;
+
+    }
+  </script>
+</body>
+
+</html>
