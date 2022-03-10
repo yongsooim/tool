@@ -1,38 +1,71 @@
 let editorOut = ace.edit("editorOut")
-let editor = ace.edit("editor")
+let editorX = ace.edit("editorX")
+let editorY = ace.edit("editorY")
 
 initEditors()
 
-editor.getSession().on('change', changed)
-document.getElementById("editor").focus()
+editorX.getSession().on('change', changed)
+editorY.getSession().on('change', changed)
+
+document.getElementById("editorY").focus()
 
 function changed(e) {
-  let inputString = editor.getValue()
-  let tokens = inputString.split(/[^0-9.]/)
-  let numericValues = []
+  let tokensTemp
+  let numericValuesX = []
+  let numericValuesY = []
 
-  tokens.forEach(v => {
+  let inputStringX = editorX.getValue()
+  let inputStringY = editorY.getValue()
+  
+  tokensTemp = inputStringX.split(/[^0-9.]/)
+
+  tokensTemp.forEach(v => {
     let maybeNum = parseFloat(v)
     if(!isNaN(maybeNum)){
-      numericValues.push(maybeNum)
+      numericValuesX.push(maybeNum)
     }
   })
 
-  console.log(numericValues)
 
-  let outputString = "number of values : " + numericValues.length
+  tokensTemp = inputStringY.split(/[^0-9.]/)
+
+  tokensTemp.forEach(v => {
+    let maybeNum = parseFloat(v)
+    if(!isNaN(maybeNum)){
+      numericValuesY.push(maybeNum)
+    }
+  })
+
+  console.log(numericValuesX)
+  console.log(numericValuesY)
+
+  let outputString = ''
+  outputString += "number of x values : " + numericValuesX.length + '\n'
+  outputString += "number of y values : " + numericValuesY.length
 
   editorOut.setValue(outputString)
+  editorOut.getSession().selection.clearSelection();
 
-  globalData[0].y = numericValues
+
+  if(numericValuesX.length == 0){
+    delete globalData[0].x
+  } else {
+    globalData[0].x = numericValuesX
+  }
+
+  globalData[0].y = numericValuesY
   Plotly.redraw(plot) 
 }
 
 
 function initEditors(){
-    editor.setTheme("ace/theme/clouds")
-    editor.session.setMode("ace/mode/c_cpp")
-    editor.setShowPrintMargin(false)
+    editorX.setTheme("ace/theme/clouds")
+    editorX.session.setMode("ace/mode/c_cpp")
+    editorX.setShowPrintMargin(false)
+
+    editorY.setTheme("ace/theme/clouds")
+    editorY.session.setMode("ace/mode/c_cpp")
+    editorY.setShowPrintMargin(false)
 
     editorOut.setTheme("ace/theme/dawn")
     editorOut.session.setMode("ace/mode/c_cpp")
@@ -43,12 +76,17 @@ function initEditors(){
       highlightActiveLine: false,
       highlightGutterLine: false
     })
-    editorOut.setOption("highlightActiveLine", true)
 
-    editor.setAutoScrollEditorIntoView(true)
+    editorX.setAutoScrollEditorIntoView(true)
+    editorY.setAutoScrollEditorIntoView(true)
     editorOut.setAutoScrollEditorIntoView(true)
 
-    editor.setOptions({
+    editorX.setOptions({
+      vScrollBarAlwaysVisible: true,
+      hScrollBarAlwaysVisible: true,
+    })
+
+    editorY.setOptions({
       vScrollBarAlwaysVisible: true,
       hScrollBarAlwaysVisible: true,
     })
@@ -59,14 +97,21 @@ function initEditors(){
 
     })
 
-    editor.session.setOptions({
+    editorX.session.setOptions({
       tabSize: 4,
       useSoftTabs: false,
     })
+
+    
+    editorY.session.setOptions({
+      tabSize: 4,
+      useSoftTabs: false,
+    })
+
     editorOut.session.setOptions({
       tabSize: 4,
       useSoftTabs: false,
     })
 
-    editor.focus()
+    editorY.focus()
 }
