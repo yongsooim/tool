@@ -17,7 +17,7 @@ function changed(e) {
   let inputStringX = editorX.getValue()
   let inputStringY = editorY.getValue()
   
-  tokensTemp = inputStringX.split(/[^0-9.]/)
+  tokensTemp = inputStringX.split(/[^0-9-.]/)
 
   tokensTemp.forEach(v => {
     let maybeNum = parseFloat(v)
