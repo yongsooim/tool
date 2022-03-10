@@ -26,7 +26,6 @@ function changed(e) {
     }
   })
 
-
   tokensTemp = inputStringY.split(/[^0-9.]/)
 
   tokensTemp.forEach(v => {
@@ -46,9 +45,8 @@ function changed(e) {
   editorOut.setValue(outputString)
   editorOut.getSession().selection.clearSelection();
 
-
-  if(numericValuesX.length == 0){
-    delete globalData[0].x
+  if(numericValuesX.length == 0 && globalData[0].x){
+      delete globalData[0].x
   } else {
     globalData[0].x = numericValuesX
   }
@@ -56,7 +54,6 @@ function changed(e) {
   globalData[0].y = numericValuesY
   Plotly.redraw(plot) 
 }
-
 
 function initEditors(){
     editorX.setTheme("ace/theme/clouds")
@@ -94,14 +91,12 @@ function initEditors(){
     editorOut.setOptions({
       vScrollBarAlwaysVisible: true,
       hScrollBarAlwaysVisible: true,
-
     })
 
     editorX.session.setOptions({
       tabSize: 4,
       useSoftTabs: false,
     })
-
     
     editorY.session.setOptions({
       tabSize: 4,
@@ -112,6 +107,14 @@ function initEditors(){
       tabSize: 4,
       useSoftTabs: false,
     })
+
+    editorX.setValue('1, 2, 3, 4, 5')
+    editorY.setValue('2, 4, 8, 16, 32')
+
+    changed()
+
+    editorX.execCommand("gotolineend")
+    editorY.execCommand("gotolineend")
 
     editorY.focus()
 }
