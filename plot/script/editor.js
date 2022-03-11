@@ -35,9 +35,6 @@ function changed(e) {
     }
   })
 
-  console.log(numericValuesX)
-  console.log(numericValuesY)
-
   let outputString = ''
   outputString += "number of x values : " + numericValuesX.length + '\n'
   outputString += "number of y values : " + numericValuesY.length
@@ -45,9 +42,9 @@ function changed(e) {
   editorOut.setValue(outputString)
   editorOut.getSession().selection.clearSelection();
 
-  if(numericValuesX.length == 0 && globalData[0].x){
-      delete globalData[0].x
-  } else {
+  globalData[0] = {}
+
+  if(numericValuesX.length != 0){
     globalData[0].x = numericValuesX
   }
 
