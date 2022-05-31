@@ -1,0 +1,17 @@
+A2L modify contents
+
+1. CHARACTERISTIC
+VALUE 0x -> VALUE 0xC0
+DP_BLOB 0x -> DP_BLOB 0x00 0xC0
+
+2. MEASUREMENT
+KP_BLOB -> KP_BLOB 0x00
+0xFD -> KP_BLOB 0x00 0xFD
+3번째 있는 0 제거
+ 0 1 ->  1
+ 0 2 ->  2
+ 0 4 ->  4
+
+3. sfpaaa[0] 파일 덮어쓰기
+
+4. ASC1READ_BUFFER, ASC1RXDATA 파일 덮어쓰기

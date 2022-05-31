@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <title>convert tags </title>
+
+  <link rel="stylesheet" href="./styles.css">
+</head>
+
+<body onload="editor.focus()">
+  <div id="overlay" onclick="overlayOff()">
+    <div id="text">copied</div>
+  </div>
+
+  <div id='navbar'>
+    <ul>
+      <li><a>convert tags</a>
+
+      </li>
+    </ul>
+  </div>
+
+  <div id='editorGroup'>
+
+    <div id="editor"></div>
+
+    <div id="editorOut"></div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/ace.js" charset="utf-8"></script>
+  <script>
+    var editor = ace.edit("editor")
+    editor.setTheme("ace/theme/clouds")
+    editor.session.setMode("ace/mode/c_cpp")
+    editor.setShowPrintMargin(false)
+
+    var editorOut = ace.edit("editorOut")
+    editorOut.setTheme("ace/theme/dawn")
+    editorOut.session.setMode("ace/mode/c_cpp")
+    editorOut.setShowPrintMargin(false)
+    editorOut.renderer.$cursorLayer.element.style.display = "none"
+    editorOut.setOptions({
+      readOnly: true,
+      highlightActiveLine: false,
+      highlightGutterLine: false
+    })
+    editorOut.setOption("highlightActiveLine", true)
+
+    editor.setAutoScrollEditorIntoView(true)
+    editorOut.setAutoScrollEditorIntoView(true)
+
+    editor.setOptions({
+      vScrollBarAlwaysVisible: true,
+      hScrollBarAlwaysVisible: true,
+
+    })
+
+    editorOut.setOptions({
+      vScrollBarAlwaysVisible: true,
+      hScrollBarAlwaysVisible: true,
+
+    })
+
+    editor.session.setOptions({
+      tabSize: 4,
+      useSoftTabs: false,
+    })
+    editorOut.session.setOptions({
+      tabSize: 4,
+      useSoftTabs: false,
+    })
+
+    editor.getSession().on('change', changed)
+
+    const STATE_OUT = 0
+    const STATE_CHAR = 1
+    const STATE_MEAS = 2
+
+    var state = STATE_OUT
+
+    var pasteAndCopyClicked = false
+
+    function changed() {
+      var length = editor.session.getLength()
+      var tokens = []
+      var outputString = ''
+      var processedString
+      var nthLine = 0
+
+      var split = editor.getValue().split('\n')
+
+      var outputString =
+        //헤더
+        `
+  <div class="zoom-in-asean__container">
+    <div class="main__title__container">
+      <div class="main__title">March 2022</div>
+    </div>
+    <div class="line"></div>
+    <h3>Zoom in ASEAN</h3>
+    <div class="zoom-in-asean__banner">
+      <h2>아세안 주요뉴스</h2>
+      <h3>Major News in ASEAN</h3>
+      <div class="line white"></div>
+      <p>지난 한 달간 아세안의 주요 이슈를 알아봅니다.</p>
+      <p>Find out about major ASEAN headlines from the past month</p>
+    </div>
+
+`
+
+      var ftpRootPath = "http://newsletter.aseankorea.org/wp-content/ftp-image/202104/"
+
+
+      var regionArr = {
+        "아세안": [ftpRootPath + "asean.jpg", "아세안 ASEAN"],
+        "브루나이": [ftpRootPath + "Brunei.png", "브루나이 Brunei Darussalam"],
+        "캄보디아": [ftpRootPath + "Cambodia.png", "캄보디아 Cambodia"],
+        "인도네시아": [ftpRootPath + "Indonesia.png", "인도네시아 Indonesia"],
+        "라오스": [ftpRootPath + "Laos.png", "라오스 Lao PDR"],
+        "말레이시아": [ftpRootPath + "Malaysia.png", "말레이시아 Malaysia"],
+        "미얀마": [ftpRootPath + "Myanmar.png", "미얀마 Myanmar"],
+        "싱가포르": [ftpRootPath + "Singapore.png", "싱가포르 Singapore"],
+        "태국": [ftpRootPath + "Thailand.png", "태국 Thailand"],
+        "베트남": [ftpRootPath + "Vietnam.png", "베트남 Viet Nam"],
+        "필리핀": [ftpRootPath + "Philippines.png", "필리핀 Philippines"],
+      }
+
+      var regionBoilerPlate = (region) => {
+
+        var retStr = ''
+        if (region[1] != "아세안 ASEAN") {
+          retStr += `    </div>
+`
+        }
+
+        retStr += `
+    <div class="content">
+      <h5>
+        <img class="zoom-in-asean__icon" src="` + region[0] + `" />` + region[1] + `
+      </h5>
+`
+        return retStr
+      }
+
+      var tempString // 이전 줄 내용 기억 (기사 제목)
+
+      for (var i = 0; i <= split.length; i++) {
+
+        for (var key in regionArr) {
+          if (split[i] && split[i].includes(regionArr[key][1])) {
+            outputString += regionBoilerPlate(regionArr[key])
+          }
+        }
+
+        if (split[i] && split[i].includes('http')) { //링크 주소면 a 태그 붙여주고 이전 줄 내용 (기사 제목) 붙임
+          outputString += `
+      <a href="` + split[i].replace('\r', '').replace('\n', '').replace('(', '').replace(')', '') + `" target="_blank">
+        ` + tempString.slice(0, -1) + `
+      </a>`
+        } else {
+          tempString = split[i]
+        }
+
+      }
+      outputString += `    </div>
+  </div>
+`
+
+
+      editorOut.setValue(outputString)
+    }
+  </script>
+</body>
+
+</html>

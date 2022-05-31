@@ -1,0 +1,22 @@
+{
+  "name": "tool",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yongsooim/tool.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/yongsooim/tool/issues"
+  },
+  "homepage": "https://github.com/yongsooim/tool#readme",
+  "dependencies": {
+    "svelte": "^3.46.4"
+  }
+}

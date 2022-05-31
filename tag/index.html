@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <title>convert tags </title>
+
+  <link rel="stylesheet" href="./styles.css">
+</head>
+
+<body onload="editor.focus()">
+  <div id="overlay" onclick="overlayOff()">
+    <div id="text">copied</div>
+  </div>
+
+  <div id='navbar'>
+    <ul>
+      <li><a>convert tags</a>
+
+      </li>
+    </ul>
+  </div>
+
+  <div id='editorGroup'>
+
+    <div id="editor"></div>
+
+    <div id="editorOut"></div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/ace.js" charset="utf-8"></script>
+  <script>
+    var editor = ace.edit("editor")
+    editor.setTheme("ace/theme/clouds")
+    editor.session.setMode("ace/mode/c_cpp")
+    editor.setShowPrintMargin(false)
+
+    var editorOut = ace.edit("editorOut")
+    editorOut.setTheme("ace/theme/dawn")
+    editorOut.session.setMode("ace/mode/c_cpp")
+    editorOut.setShowPrintMargin(false)
+    editorOut.renderer.$cursorLayer.element.style.display = "none"
+    editorOut.setOptions({
+      readOnly: true,
+      highlightActiveLine: false,
+      highlightGutterLine: false
+    })
+    editorOut.setOption("highlightActiveLine", true)
+
+    editor.setAutoScrollEditorIntoView(true)
+    editorOut.setAutoScrollEditorIntoView(true)
+
+    editor.setOptions({
+      vScrollBarAlwaysVisible: true,
+      hScrollBarAlwaysVisible: true,
+
+    })
+
+    editorOut.setOptions({
+      vScrollBarAlwaysVisible: true,
+      hScrollBarAlwaysVisible: true,
+
+    })
+
+    editor.session.setOptions({
+      tabSize: 4,
+      useSoftTabs: false,
+    })
+    editorOut.session.setOptions({
+      tabSize: 4,
+      useSoftTabs: false,
+    })
+
+    editor.getSession().on('change', changed)
+
+    const STATE_OUT = 0
+    const STATE_CHAR = 1
+    const STATE_MEAS = 2
+
+    var state = STATE_OUT
+
+    var pasteAndCopyClicked = false
+
+    function changed() {
+      var length = editor.session.getLength()
+      var tokens = []
+      var outputString = ''
+      var processedString
+      var nthLine = 0
+      let string = editor.getValue()
+
+      let tagsArrAll = string.replace('\r', '').replace(/"/g, '').replace(`"`, '').split('\n')
+
+      let output = ''
+
+      let counter = 0
+
+      tagsArrAll.forEach(v => {
+        let split = v.split('/')
+        output += '\n'
+
+        split.forEach(v => {
+          if (v.trim() !== '') {
+            output += `<a href="/kf/search.do?searchText=${v.trim()}" target="_blank">${v.trim()}</a>\n`
+          }
+        })
+        counter++
+
+        if (counter % 2 === 0) {
+          output += `===================================================================================\n`
+        }
+      })
+
+
+      editorOut.setValue(output)
+    }
+  </script>
+</body>
+
+</html>
