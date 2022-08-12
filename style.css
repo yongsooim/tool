@@ -4,15 +4,24 @@ body {
 }
 
 .main {
-    left : 10%;
-    top : 10%;
-    font-family: 'Nanum Gothic';
-    font-size : 30px;
+    margin-left : 20px;
+    margin-top : 20px;
+    font-size : 25px;
 }
 
 li {
-    padding : 10px;
+    padding : 20px;
+    width: 500px;
     color : grey;
+    border: 1px solid grey;
+    border-radius: 10px;
+    margin : 30px;
+    list-style: none;
+
+}
+
+li:hover {
+    background-color: rgb(30, 30, 30);
 }
 
 a {
