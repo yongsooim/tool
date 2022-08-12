@@ -12,11 +12,15 @@ body {
 li {
     padding : 20px;
     width: 500px;
+    height: 80px;
     color : grey;
     border: 1px solid grey;
     border-radius: 10px;
     margin : 30px;
     list-style: none;
+    text-align: center;
+    vertical-align: middle;
+    justify-content: center;
 
 }
 
