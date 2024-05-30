@@ -105,7 +105,6 @@ function initEditors(){
       useSoftTabs: false,
     })
 
-    editorX.setValue('1, 2, 3, 4, 5')
     editorY.setValue('2, 4, 8, 16, 32')
 
     changed()
