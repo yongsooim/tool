@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FIR equalizer</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: start;
+      align-items: flex-start;
+    }
+
+    .parameters {
+      margin-right: 20px;
+      width: 300px;
+    }
+
+    .chart-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .chart-container canvas {
+      margin-top: 20px;
+    }
+
+    .slider-container {
+      display: flex;
+      align-items: center;
+    }
+
+    .slider-container input {
+      margin-left: 10px;
+      margin-right: 10px;
+    }
+
+    .slider-container span {
+      text-align: right;
+    }
+
+    #frequency, #gain {
+      width: 40%;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="parameters">
+    <h1>FIR Equalizer</h1>
+    <h3>Sample rate 48khz</h3>
+    
+    <div id="frequency">
+      <label>Frequencies (Hz):</label>
+      <div class="slider-container">
+        <input type="range" id="frequency1" min="50" max="500" step="1" value="50">
+      <span id="frequency1Value">50</span>
+      </div>
+      <div class="slider-container">
+        <input type="range" id="frequency2" min="20" max="22000" step="1" value="1100">
+        <span id="frequency2Value">1100</span>
+      </div>
+      <div class="slider-container">
+        <input type="range" id="frequency3" min="20" max="22000" step="1" value="3100">
+        <span id="frequency3Value">3100</span>
+      </div>
+      <div class="slider-container">
+        <input type="range" id="frequency4" min="20" max="22000" step="1" value="22000">
+        <span id="frequency4Value">22000</span>
+      </div>
+    </div>
+    <div id="gain">
+      <label>Gains (dB):</label>
+      <div class="slider-container">
+        <input type="range" id="gain1" min="-96" max="12" step="0.1" value="0">
+        <span id="gain1Value">0.0</span>
+      </div>
+      <div class="slider-container">
+        <input type="range" id="gain2" min="-96" max="12" step="0.1" value="0">
+        <span id="gain2Value">0.0</span>
+      </div>
+      <div class="slider-container">
+        <input type="range" id="gain3" min="-96" max="12" step="0.1" value="0">
+        <span id="gain3Value">0.0</span>
+      </div>
+      <div class="slider-container">
+        <input type="range" id="gain4" min="-96" max="12" step="0.1" value="0">
+        <span id="gain4Value">0.0</span>
+      </div>
+    </div>
+    <div class="slider-container">
+      <label for="nFIR">nFIR:</label>
+      <input type="range" id="nFIR" min="5" max="512" step="1" value="251">
+      <br>
+      <span id="nFIRValue">251</span>
+    </div>
+    <div class="slider-container">
+      <label for="kdb">kdb:</label>
+      <input type="range" id="kdb" min="15" max="210" step="1" value="60">
+      <span id="kdbValue">60</span>
+    </div>
+  </div>
+  <div class="chart-container">
+    <canvas id="responseChart" width="1600" height="450"></canvas>
+    <canvas id="tapChart" width="1600" height="450"></canvas>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.min.js"></script>
+
+  <script>
+    let chartInstance = null;
+    let tapInstance = null;
+
+    const sliders = document.querySelectorAll('input[type="range"]');
+    sliders.forEach(slider => slider.addEventListener('input', updateEqualizer));
+
+    function updateEqualizer() {
+      const frequencies = [
+        parseFloat(document.getElementById('frequency1').value),
+        parseFloat(document.getElementById('frequency2').value),
+        parseFloat(document.getElementById('frequency3').value),
+        parseFloat(document.getElementById('frequency4').value)
+      ];
+      const gains = [
+        parseFloat(document.getElementById('gain1').value),
+        parseFloat(document.getElementById('gain2').value),
+        parseFloat(document.getElementById('gain3').value),
+        parseFloat(document.getElementById('gain4').value)
+      ];
+      let nFIR = parseInt(document.getElementById('nFIR').value);
+      const kdb = parseInt(document.getElementById('kdb').value);
+
+      // Update displayed values
+      document.getElementById('frequency1Value').textContent = `${frequencies[0]} hz`;
+      document.getElementById('frequency2Value').textContent = `${frequencies[1]} hz`;
+      document.getElementById('frequency3Value').textContent = `${frequencies[2]} hz`;
+      document.getElementById('frequency4Value').textContent = `${frequencies[3]} hz`;
+      document.getElementById('gain1Value').textContent = gains[0].toFixed(1);
+      document.getElementById('gain2Value').textContent = gains[1].toFixed(1);
+      document.getElementById('gain3Value').textContent = gains[2].toFixed(1);
+      document.getElementById('gain4Value').textContent = gains[3].toFixed(1);
+      document.getElementById('nFIRValue').textContent = `${nFIR} delay: ${((((nFIR - 1) / 2) / 48000) * 1000).toFixed(2)}ms`;
+      document.getElementById('kdbValue').textContent = kdb;
+
+      const sampleRateHz = 48000;
+      const nBands = Math.min(frequencies.length, gains.length);
+
+      if (nFIR < 5 || nFIR > 512 || nBands < 2 || nBands > 50) {
+        alert('Invalid nFIR or nBands');
+        return;
+      }
+
+      if (nFIR % 2 === 0) {
+        nFIR -= 1;
+      }
+
+      const nHalfFIR = (nFIR - 1) / 2;
+      const aVolts = gains.map(gain => Math.pow(10, 0.05 * gain));
+      const fNorm = frequencies.map(f => f / sampleRateHz);
+
+      let cf32f = new Array(nFIR).fill(0);
+      cf32f[nHalfFIR] = 2.0 * aVolts[0] * fNorm[0];
+      for (let i = 1; i < nBands; i++) {
+        cf32f[nHalfFIR] += 2.0 * aVolts[i] * (fNorm[i] - fNorm[i - 1]);
+      }
+
+      for (let j = 1; j <= nHalfFIR; j++) {
+        const q = Math.PI * j;
+        cf32f[nHalfFIR + j] = aVolts[0] * Math.sin(fNorm[0] * 2.0 * q) / q;
+        for (let i = 1; i < nBands; i++) {
+          cf32f[nHalfFIR + j] += aVolts[i] * (
+            Math.sin(fNorm[i] * 2.0 * q) / q - Math.sin(fNorm[i - 1] * 2.0 * q) / q
+          );
+        }
+      }
+
+      let beta = 0;
+      if (kdb > 50) {
+        beta = 0.1102 * (kdb - 8.7);
+      } else if (kdb > 20.96) {
+        beta = 0.58417 * Math.pow((kdb - 20.96), 0.4) + 0.07886 * (kdb - 20.96);
+      }
+
+      const kbes = 1.0 / besseli0(beta);
+      const scaleXj2 = 2.0 / nFIR;
+      for (let j = 0; j <= nHalfFIR; j++) {
+        const xj2 = Math.pow(0.5 + j, 2) * Math.pow(scaleXj2, 2);
+        const windowWt = kbes * besseli0(beta * Math.sqrt(1.0 - xj2));
+        cf32f[nHalfFIR + j] *= windowWt;
+        cf32f[nHalfFIR - j] = cf32f[nHalfFIR + j];
+      }
+
+      const nFreq = 512;
+      const rdb = new Array(nFreq).fill(0);
+      const piOnNfreq = Math.PI / nFreq;
+
+      for (let i = 0; i < nFreq; i++) {
+        let bt = cf32f[nHalfFIR];
+        for (let j = 0; j < nHalfFIR; j++) {
+          bt += 2.0 * cf32f[j] * Math.cos(piOnNfreq * (nHalfFIR - j) * i);
+        }
+        rdb[i] = 20.0 * Math.log10(Math.abs(bt));
+      }
+
+      const ctx = document.getElementById('responseChart').getContext('2d');
+      const ctxTap = document.getElementById('tapChart').getContext('2d');
+      const frequenciesArray = Array.from({ length: nFreq }, (_, i) => (i / nFreq) * (sampleRateHz / 2));
+
+      if (chartInstance) {
+        chartInstance.destroy();
+      }
+
+      if (tapInstance) {
+        tapInstance.destroy();
+      }
+
+      chartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: frequenciesArray,
+          datasets: [{
+            label: 'Frequency Response',
+            data: rdb,
+            borderWidth: 3,
+            fill: false
+          }]
+        },
+        options: {
+          scales: {
+            x: {
+              type: 'logarithmic',
+              title: {
+                display: true,
+                text: 'Frequency (Hz)'
+              }
+            },
+            y: {
+              title: {
+                display: true,
+                text: 'Gain (dB)'
+              },
+              min: -100,
+              max: 20
+            }
+          },
+          animation: {
+            duration: 0
+          }
+        }
+      });
+
+      tapInstance = new Chart(ctxTap, {
+        type: 'line',
+        options: {
+          elements: { point: { radius: 0 } }
+        },
+        data: {
+          labels: Array.from({ length: nFIR }, (_, i) => i),
+          datasets: [{
+            label: 'Taps',
+            data: cf32f,
+            borderWidth: 3,
+            radius: 1,
+            fill: false
+          }]
+        },
+        options: {
+          scales: {
+            x: {
+              title: {
+                display: true,
+                text: 'Tap'
+              }
+            },
+            y: {
+              title: {
+                display: true,
+                text: 'Value'
+              },
+              min: -0.1,
+              max: 1
+            }
+          },
+          animation: {
+            duration: 0
+          }
+        }
+      });
+    }
+
+    function besseli0(x) {
+      let sum = 1.0;
+      let y = x * x / 4.0;
+      let t = y;
+      for (let i = 1; i < 25; i++) {
+        sum += t;
+        t *= y / (i * i);
+      }
+      return sum;
+    }
+
+    updateEqualizer(); // Initial call to draw the charts with default values
+  </script>
+</body>
+
+</html>
