@@ -34,7 +34,6 @@
     }
 
     .slider-container input {
-      margin-left: 10px;
       margin-right: 10px;
     }
 
@@ -42,9 +41,6 @@
       text-align: right;
     }
 
-    #frequency, #gain {
-      width: 40%;
-    }
   </style>
 </head>
 
@@ -56,56 +52,110 @@
     <div id="frequency">
       <label>Frequencies (Hz):</label>
       <div class="slider-container">
-        <input type="range" id="frequency1" min="50" max="500" step="1" value="50">
+        1<input type="range" id="frequency1" min="50" max="500" step="1" value="50">
       <span id="frequency1Value">50</span>
       </div>
       <div class="slider-container">
-        <input type="range" id="frequency2" min="20" max="22000" step="1" value="1100">
+        2<input type="range" id="frequency2" min="20" max="22000" step="1" value="1100">
         <span id="frequency2Value">1100</span>
       </div>
       <div class="slider-container">
-        <input type="range" id="frequency3" min="20" max="22000" step="1" value="3100">
+        3<input type="range" id="frequency3" min="20" max="22000" step="1" value="3100">
         <span id="frequency3Value">3100</span>
       </div>
       <div class="slider-container">
-        <input type="range" id="frequency4" min="20" max="22000" step="1" value="22000">
+        4<input type="range" id="frequency4" min="20" max="22000" step="1" value="22000">
         <span id="frequency4Value">22000</span>
       </div>
+      <div class="slider-container">
+        5<input type="range" id="frequency5" min="20" max="22000" step="1" value="22000">
+        <span id="frequency5Value">22000</span>
+      </div>
+      <div class="slider-container">
+        6<input type="range" id="frequency6" min="20" max="22000" step="1" value="22000">
+        <span id="frequency6Value">22000</span>
+      </div>
+      <div class="slider-container">
+        7<input type="range" id="frequency7" min="20" max="22000" step="1" value="22000">
+        <span id="frequency7Value">22000</span>
+      </div>
+      <div class="slider-container">
+        8<input type="range" id="frequency8" min="20" max="22000" step="1" value="22000">
+        <span id="frequency8Value">22000</span>
+      </div>
+      <div class="slider-container">
+        9<input type="range" id="frequency9" min="20" max="22000" step="1" value="22000">
+        <span id="frequency9Value">22000</span>
+      </div>
+      <div class="slider-container">
+        10<input type="range" id="frequency10" min="20" max="22000" step="1" value="22000">
+        <span id="frequency10Value">22000</span>
+      </div>
     </div>
+    <br>
     <div id="gain">
       <label>Gains (dB):</label>
       <div class="slider-container">
-        <input type="range" id="gain1" min="-96" max="12" step="0.1" value="0">
+        1<input type="range" id="gain1" min="-96" max="12" step="0.1" value="0">
         <span id="gain1Value">0.0</span>
       </div>
       <div class="slider-container">
-        <input type="range" id="gain2" min="-96" max="12" step="0.1" value="0">
+        2<input type="range" id="gain2" min="-96" max="12" step="0.1" value="0">
         <span id="gain2Value">0.0</span>
       </div>
       <div class="slider-container">
-        <input type="range" id="gain3" min="-96" max="12" step="0.1" value="0">
+        3<input type="range" id="gain3" min="-96" max="12" step="0.1" value="0">
         <span id="gain3Value">0.0</span>
       </div>
       <div class="slider-container">
-        <input type="range" id="gain4" min="-96" max="12" step="0.1" value="0">
+        4<input type="range" id="gain4" min="-96" max="12" step="0.1" value="0">
         <span id="gain4Value">0.0</span>
       </div>
+      <div class="slider-container">
+        5<input type="range" id="gain5" min="-96" max="12" step="0.1" value="0">
+        <span id="gain5Value">0.0</span>
+      </div>
+      <div class="slider-container">
+        6<input type="range" id="gain6" min="-96" max="12" step="0.1" value="0">
+        <span id="gain6Value">0.0</span>
+      </div>
+      <div class="slider-container">
+        7<input type="range" id="gain7" min="-96" max="12" step="0.1" value="0">
+        <span id="gain7Value">0.0</span>
+      </div>
+      <div class="slider-container">
+        8<input type="range" id="gain8" min="-96" max="12" step="0.1" value="0">
+        <span id="gain8Value">0.0</span>
+      </div>
+      <div class="slider-container">
+        9<input type="range" id="gain9" min="-96" max="12" step="0.1" value="0">
+        <span id="gain9Value">0.0</span>
+      </div>
+      <div class="slider-container">
+        10<input type="range" id="gain10" min="-96" max="12" step="0.1" value="0">
+        <span id="gain10Value">0.0</span>
+      </div>
     </div>
+
+    <br>
+    <br>
+
+    <div>nFIR</div>
     <div class="slider-container">
-      <label for="nFIR">nFIR:</label>
       <input type="range" id="nFIR" min="5" max="512" step="1" value="251">
       <br>
       <span id="nFIRValue">251</span>
     </div>
+    <br>
+    <div>kdb</div>
     <div class="slider-container">
-      <label for="kdb">kdb:</label>
       <input type="range" id="kdb" min="15" max="210" step="1" value="60">
       <span id="kdbValue">60</span>
     </div>
   </div>
   <div class="chart-container">
-    <canvas id="responseChart" width="1600" height="450"></canvas>
-    <canvas id="tapChart" width="1600" height="450"></canvas>
+    <canvas id="responseChart" width="2000px" height="500px"></canvas>
+    <canvas id="tapChart" width="2000px" height="500px"></canvas>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -123,13 +173,25 @@
         parseFloat(document.getElementById('frequency1').value),
         parseFloat(document.getElementById('frequency2').value),
         parseFloat(document.getElementById('frequency3').value),
-        parseFloat(document.getElementById('frequency4').value)
+        parseFloat(document.getElementById('frequency4').value),
+        parseFloat(document.getElementById('frequency5').value),
+        parseFloat(document.getElementById('frequency6').value),
+        parseFloat(document.getElementById('frequency7').value),
+        parseFloat(document.getElementById('frequency8').value),
+        parseFloat(document.getElementById('frequency9').value),
+        parseFloat(document.getElementById('frequency10').value)
       ];
       const gains = [
         parseFloat(document.getElementById('gain1').value),
         parseFloat(document.getElementById('gain2').value),
         parseFloat(document.getElementById('gain3').value),
-        parseFloat(document.getElementById('gain4').value)
+        parseFloat(document.getElementById('gain4').value),
+        parseFloat(document.getElementById('gain5').value),
+        parseFloat(document.getElementById('gain6').value),
+        parseFloat(document.getElementById('gain7').value),
+        parseFloat(document.getElementById('gain8').value),
+        parseFloat(document.getElementById('gain9').value),
+        parseFloat(document.getElementById('gain10').value),
       ];
       let nFIR = parseInt(document.getElementById('nFIR').value);
       const kdb = parseInt(document.getElementById('kdb').value);
@@ -139,10 +201,22 @@
       document.getElementById('frequency2Value').textContent = `${frequencies[1]} hz`;
       document.getElementById('frequency3Value').textContent = `${frequencies[2]} hz`;
       document.getElementById('frequency4Value').textContent = `${frequencies[3]} hz`;
-      document.getElementById('gain1Value').textContent = gains[0].toFixed(1);
-      document.getElementById('gain2Value').textContent = gains[1].toFixed(1);
-      document.getElementById('gain3Value').textContent = gains[2].toFixed(1);
-      document.getElementById('gain4Value').textContent = gains[3].toFixed(1);
+      document.getElementById('frequency5Value').textContent = `${frequencies[4]} hz`;
+      document.getElementById('frequency6Value').textContent = `${frequencies[5]} hz`;
+      document.getElementById('frequency7Value').textContent = `${frequencies[6]} hz`;
+      document.getElementById('frequency8Value').textContent = `${frequencies[7]} hz`;
+      document.getElementById('frequency9Value').textContent = `${frequencies[8]} hz`;
+      document.getElementById('frequency10Value').textContent = `${frequencies[9]} hz`;
+      document.getElementById('gain1Value').textContent = gains[0].toFixed(2);
+      document.getElementById('gain2Value').textContent = gains[1].toFixed(2);
+      document.getElementById('gain3Value').textContent = gains[2].toFixed(2);
+      document.getElementById('gain4Value').textContent = gains[3].toFixed(2);
+      document.getElementById('gain5Value').textContent = gains[4].toFixed(2);
+      document.getElementById('gain6Value').textContent = gains[5].toFixed(2);
+      document.getElementById('gain7Value').textContent = gains[6].toFixed(2);
+      document.getElementById('gain8Value').textContent = gains[7].toFixed(2);
+      document.getElementById('gain9Value').textContent = gains[8].toFixed(2);
+      document.getElementById('gain10Value').textContent = gains[9].toFixed(2);
       document.getElementById('nFIRValue').textContent = `${nFIR} delay: ${((((nFIR - 1) / 2) / 48000) * 1000).toFixed(2)}ms`;
       document.getElementById('kdbValue').textContent = kdb;
 
@@ -281,7 +355,7 @@
                 display: true,
                 text: 'Value'
               },
-              min: -0.1,
+              min: -0.5,
               max: 1
             }
           },
