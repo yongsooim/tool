@@ -50,6 +50,10 @@ function changed(e) {
 
   globalData[0].y = numericValuesY
   Plotly.redraw(plot) 
+  Plotly.relayout(plot, {
+    'xaxis.autorange': true,
+    'yaxis.autorange': true
+  });
 }
 
 function initEditors(){
