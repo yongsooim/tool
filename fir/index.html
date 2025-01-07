@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>FIR Filter Designer</title>
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.2/ace.js"></script>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f5f5f5;
+      color: #333;
+    }
+
+    .container {
+      width: 90%;
+      max-width: 1800px;
+      margin: 2rem auto;
+      padding: 2rem;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .input-group {
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .input-group label {
+      display: inline-block;
+      margin-bottom: 0;
+      font-weight: 600;
+      min-width: 200px;
+    }
+
+    input[type="number"] {
+      padding: 0.5rem;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      width: 200px;
+      font-size: 1rem;
+    }
+
+    #editor {
+      flex: 1;
+      height: 60px;
+      margin-bottom: 0;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    #tapsPlot,
+    #responsePlot {
+      margin-bottom: 2rem;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <div class="input-group"><label for="sampleRate">Sample Rate (Hz):</label><input
+        type="number" id="sampleRate" value="48000" min="1"  onchange="updatePlots()"></div>
+
+    <div class="input-group">
+      <label for="editor">FIR Taps (comma-separated):<div id="number-of-taps"></div> </label>
+      <div id="editor">0.1, 0.2, 0.4, 0.2, 0.1</div>
+    </div>
+
+    <div id="tapsPlot"></div>
+    <div id="responsePlot"></div>
+  </div>
+
+  <script>
+    // Add this debounce function at the top of your script
+    function debounce(func, wait) {
+      let timeout;
+      return function executedFunction(...args) {
+        const later = () => {
+          clearTimeout(timeout);
+          func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+      };
+    }
+
+    // Initialize Ace Editor
+    const editor = ace.edit("editor");
+    editor.setTheme("ace/theme/monokai");
+    editor.session.setMode("ace/mode/text");
+    editor.setShowPrintMargin(false);
+
+    // Modify the editor change listener
+    editor.getSession().on('change', debounce(() => {
+      updatePlots();
+    }, 250)); // Only update after 250ms of no changes
+
+
+    // Update plot styling
+    const plotLayout = {
+      font: {
+        family: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif"
+      },
+      paper_bgcolor: 'rgba(0,0,0,0)',
+      plot_bgcolor: 'rgba(0,0,0,0)',
+      margin: { t: 40, r: 40, l: 60, b: 40 }
+    };
+
+    // Add these memoized calculations
+    const memoizedFrequencies = new Map();
+    function getFrequencies(N, sampleRate) {
+      const key = `${N}-${sampleRate}`;
+      if (!memoizedFrequencies.has(key)) {
+        memoizedFrequencies.set(key,
+          Float64Array.from({ length: N }, (_, i) => (i * sampleRate) / (2 * N))
+        );
+      }
+      return memoizedFrequencies.get(key);
+    }
+
+    // Optimize the frequency response calculation
+    function calculateFrequencyResponse(taps, N) {
+      const response = new Float64Array(N);
+      const tapCount = taps.length;
+
+      // Pre-calculate coefficients
+      const coefficients = new Float64Array(tapCount);
+      for (let n = 0; n < tapCount; n++) {
+        coefficients[n] = taps[n];
+      }
+
+      // Main calculation loop with optimizations
+      for (let k = 0; k < N; k++) {
+        const omega = (Math.PI * k) / N;
+        let real = 0;
+        let imag = 0;
+
+        // Unrolled loop for better performance
+        for (let n = 0; n < tapCount; n += 4) {
+          const phase = omega * n;
+          if (n + 3 < tapCount) {
+            real += coefficients[n] * Math.cos(-phase) +
+              coefficients[n + 1] * Math.cos(-(phase + omega)) +
+              coefficients[n + 2] * Math.cos(-(phase + 2 * omega)) +
+              coefficients[n + 3] * Math.cos(-(phase + 3 * omega));
+
+            imag += coefficients[n] * Math.sin(-phase) +
+              coefficients[n + 1] * Math.sin(-(phase + omega)) +
+              coefficients[n + 2] * Math.sin(-(phase + 2 * omega)) +
+              coefficients[n + 3] * Math.sin(-(phase + 3 * omega));
+          } else {
+            // Handle remaining elements
+            for (let m = n; m < tapCount; m++) {
+              const phase = omega * m;
+              real += coefficients[m] * Math.cos(-phase);
+              imag += coefficients[m] * Math.sin(-phase);
+            }
+            break;
+          }
+        }
+
+        response[k] = 20 * Math.log10(Math.sqrt(real * real + imag * imag) + 1e-10);
+      }
+
+      return response;
+    }
+
+    // Modify updatePlots to use the optimized functions
+    function updatePlots() {
+      const sampleRate = parseFloat(document.getElementById('sampleRate').value);
+
+      let tokensTemp
+      let numericValuesX = []
+
+      let inputStringX = editor.getValue()
+
+      tokensTemp = inputStringX.trim().split(/[^0-9.e-]+/).filter(Boolean)
+
+      const taps = new Float64Array(tokensTemp.length)
+      let tapCount = 0
+      tokensTemp.forEach(v => {
+        let maybeNum = parseFloat(v)
+        if (!isNaN(maybeNum)) {
+          taps[tapCount++] = maybeNum
+        }
+      })
+      // Plot taps
+      const tapIndices = Array.from({ length: taps.length }, (_, i) => i);
+      Plotly.newPlot('tapsPlot', [{
+        x: tapIndices,
+        y: taps,
+        type: 'line',
+        mode: 'lines',
+        line: { color: '#2196F3', width: 2 },
+        marker: { color: '#1976D2', size: 8 },
+        name: 'FIR Taps',
+
+      }], {
+        ...plotLayout,
+        title: 'FIR Filter Taps',
+        xaxis: {
+          title: 'Tap Index',
+          gridcolor: '#eee'
+        },
+        yaxis: {
+          title: 'Amplitude',
+          gridcolor: '#eee'
+        },
+        dragmode: "pan"
+      },
+        { scrollZoom: true, responsive: true }
+      );
+
+      // Calculate frequency response
+      const N = 1024;
+      const frequencies = getFrequencies(N, sampleRate);
+      const response = calculateFrequencyResponse(taps, N);
+
+      // Plot frequency response
+      Plotly.newPlot('responsePlot', [{
+        x: frequencies,
+        y: response,
+        type: 'scatter',
+        mode: 'lines',
+        line: { color: '#4CAF50', width: 2 },
+        name: 'Frequency Response'
+      }], {
+        ...plotLayout,
+        title: 'Frequency Response',
+        xaxis: {
+          title: 'Frequency (Hz)',
+          gridcolor: '#eee'
+        },
+        yaxis: {
+          title: 'Magnitude (dB)',
+          gridcolor: '#eee'
+        },
+        dragmode: "pan"
+
+      }, { scrollZoom: true, responsive: true }
+      );
+
+      document.getElementById('number-of-taps').innerHTML = taps.length;
+    }
+
+    // Add throttled window resize handler
+    window.addEventListener('resize', debounce(() => {
+      Plotly.Plots.resize('tapsPlot');
+      Plotly.Plots.resize('responsePlot');
+    }, 100));
+
+    // Initialize plots with default values
+    window.onload = function () {
+      updatePlots();
+      editor.focus();
+    };
+  </script>
+</body>
+
+</html>
